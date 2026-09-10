@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>프리미어리그 축구 경영 시뮬레이션</title>
+  <title>프리미어리그 축구 구단 경영 시뮬레이션</title>
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -32,7 +32,7 @@
       font-weight: 700;
     }
     .brand .logo {
-      width: 34px; height: 34px;
+      width: 36px; height: 36px;
       border-radius: 8px;
       background: #2b8c4e;
       color: #ffffff;
@@ -40,9 +40,15 @@
       display: grid;
       place-items: center;
     }
+    .brand .pet {
+      font-size: 14px;
+      color: #8b949e;
+      font-weight: 600;
+      margin-top: 2px;
+    }
     .stats {
       display: flex;
-      gap: 14px;
+      gap: 12px;
       flex-wrap: wrap;
     }
     .stat {
@@ -56,6 +62,7 @@
     }
     .stat .label { color: #8b949e; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
     .stat .val { font-weight: 700; font-size: 16px; }
+    .stat .sub { font-size: 11px; color: #8b949e; }
 
     .grid {
       display: grid;
@@ -81,6 +88,13 @@
       border-bottom: 1px solid #262d38;
       padding-bottom: 8px;
     }
+
+    .row-flex { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .muted { color: #8b949e; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .mt { margin-top: 12px; }
+    .mb { margin-bottom: 12px; }
 
     table {
       width: 100%;
@@ -111,6 +125,9 @@
     }
     .badge.starter { background: rgba(43,140,78,0.18); color: #2b8c4e; }
     .badge.sub { background: rgba(139,148,158,0.18); color: #8b949e; }
+    .badge.good { background: rgba(43,140,78,0.18); color: #2b8c4e; }
+    .badge.warn { background: rgba(210,153,34,0.18); color: #d29922; }
+    .badge.bad { background: rgba(200,51,74,0.18); color: #c8334a; }
 
     .btn {
       background: #2b8c4e;
@@ -133,6 +150,8 @@
     .btn.secondary:hover { background: #1f2530; }
     .btn.danger { background: #c8334a; }
     .btn.danger:hover { background: #a62837; }
+    .btn.warn { background: #d29922; }
+    .btn.warn:hover { background: #b07f1a; }
 
     .actions {
       display: flex;
@@ -149,17 +168,15 @@
       color: #8b949e;
       margin-top: 6px;
     }
-    .log .entry {
-      padding: 4px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-    }
+    .log .entry { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
     .log .entry.win { color: #2b8c4e; }
     .log .entry.draw { color: #d29922; }
     .log .entry.loss { color: #c8334a; }
-    .log .entry.bad { color: #c8334a; }
     .log .entry.good { color: #2b8c4e; }
+    .log .entry.bad { color: #c8334a; }
+    .log .entry.info { color: #9bb0c9; }
 
-    select, input[type=text] {
+    select, input[type=text], input[type=number] {
       background: #0f1217;
       color: #e6edf3;
       border: 1px solid #262d38;
@@ -170,12 +187,38 @@
     }
     select:focus, input:focus { outline: 1px solid #2b8c4e; }
 
-    .row-flex { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .muted { color: #8b949e; }
-    .text-center { text-align: center; }
-    .text-right { text-align: right; }
-    .mt { margin-top: 12px; }
-    .mb { margin-bottom: 12px; }
+    .range-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .range-row input[type=range] { flex: 1; min-width: 120px; }
+    .range-row .val { font-weight: 700; }
+
+    .panel-inset {
+      background: #0f1217;
+      border: 1px solid #262d38;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+    .panel-inset h3 {
+      margin: 0 0 6px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8b949e;
+    }
+
+    .meter {
+      height: 8px;
+      border-radius: 999px;
+      background: #262d38;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .meter > div {
+      height: 100%;
+      background: #2b8c4e;
+    }
+    .meter.warn > div { background: #d29922; }
+    .meter.bad > div { background: #c8334a; }
 
     footer {
       margin-top: 24px;
@@ -185,95 +228,201 @@
       border-top: 1px solid #262d38;
       padding-top: 12px;
     }
+
+    .hidden { display: none !important; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 600px) {
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+    .summary-box {
+      background: #0f1217;
+      border: 1px solid #262d38;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .summary-box .label { color: #8b949e; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .summary-box .val { font-weight: 700; font-size: 18px; margin-top: 4px; }
+    .summary-box .desc { font-size: 11px; color: #8b949e; margin-top: 2px; }
   </style>
 </head>
 <body>
   <div class="topbar">
     <div class="brand">
       <div class="logo" id="clubLogo">FC</div>
-      <div id="clubHeader">
+      <div>
         <div id="clubName" style="font-weight:700"></div>
-        <div id="clubSub" class="muted" style="font-size:12px"></div>
+        <div id="clubSub" class="pet"></div>
       </div>
     </div>
     <div class="stats" id="topStats"></div>
   </div>
 
-  <div class="grid">
-    <div class="card">
-      <h2>프리미어리그 순위 (상위 10)</h2>
-      <table id="leagueTable">
-        <thead>
-          <tr>
-            <th>순위</th><th>구단</th><th class="num">경기</th><th class="num">승</th>
-            <th class="num">무</th><th class="num">패</th><th class="num">득</th><th class="num">실</th>
-            <th class="num">골득실</th><th class="num">승점</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <h2>다음 경기</h2>
-      <div id="nextMatch" class="muted" style="font-size:13px"> 로딩 중…</div>
-      <div class="actions mt">
-        <button class="btn" id="btnSimulate">경기 진행하기</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>스쿼드</h2>
-      <div class="row-flex mb">
-        <select id="filterPos">
-          <option value="ALL">전체</option>
-          <option value="GK">GK</option>
-          <option value="DF">DF</option>
-          <option value="MF">MF</option>
-          <option value="FW">FW</option>
-        </select>
-        <span class="muted" style="font-size:12px; align-self:center" id="squadCount"></span>
-      </div>
-      <table id="squadTable">
-        <thead>
-          <tr>
-            <th>선수</th><th>포지션</th><th>나이</th><th class="num">OVR</th>
-            <th class="num">주급</th><th>상태</th><th>계약</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <h2>경영 (이적 시장)</h2>
-      <div class="row-flex mb">
-        <select id="transferType">
-          <option value="buy">영입 (이적 자금 사용)</option>
-          <option value="sell">방출 (선수 판매)</option>
-        </select>
-      </div>
-      <div id="transferPanel">
-        <p class="muted" style="font-size:13px" id="transferHint">아래 버튼을 눌러 새 시즌을 시작하고 이적 시장을 열거나, 방출할 선수를 고르세요.</p>
-      </div>
-      <div class="actions mt" id="transferActions" style="display:none">
-        <button class="btn" id="btnTransfer">적용</button>
-        <button class="btn secondary" id="btnTransferCancel">취소</button>
-      </div>
-    </div>
-
-    <div class="card" style="grid-column: 1 / -1;">
-      <h2>경기/경영 로그</h2>
-      <div class="log" id="logPanel">
-        <div class="entry">시뮬레이션을 시작하면 프리미어리그 구단을 운영하고 경기/이적/사건 로그를 볼 수 있습니다.</div>
-      </div>
-      <div class="actions mt">
-        <button class="btn secondary" id="btnNewSeason">새 시즌 시작하기 (초기화)</button>
+  <div id="startScreen">
+    <div class="card" style="max-width:720px; margin-top:8px;">
+      <h2>프리미어리그 구단 경영 시뮬레이션</h2>
+      <p class="muted" style="font-size:14px; margin-bottom:14px;">
+        프리미어리그 16개 구단 중 하나를 선택하고, 예산·마케팅·시설을 관리하며 구단을 운영하세요.
+        선수 영입과 방출, 경기 결과, 팬 만족도, 시즌 종료 후 경영 성과 평가까지 경험할 수 있습니다.
+      </p>
+      <div class="panel-inset">
+        <h3>선택할 구단</h3>
+        <select id="startClub" style="width:100%; margin-bottom:10px;"></select>
+        <div class="actions">
+          <button class="btn" id="btnStart">구단 경영 시작하기</button>
+        </div>
+        <p class="muted" style="font-size:12px; margin-top:10px;">
+          각 구단은 초기 예산, 팬 만족도, 선수 풀이 다르며, 선택에 따라 시즌 운영 난이도와 방향이 달라집니다.
+        </p>
       </div>
     </div>
   </div>
 
-  <footer>프리미어리그 축구 경영 시뮬레이션 · 대시보드형 MVP</footer>
+  <div id="gameScreen" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>리그 순위 (상위 10)</h2>
+        <table id="leagueTable">
+          <thead>
+            <tr>
+              <th>순위</th><th>구단</th><th class="num">경기</th><th class="num">승</th>
+              <th class="num">무</th><th class="num">패</th><th class="num">득</th><th class="num">실</th>
+              <th class="num">골득실</th><th class="num">승점</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>스쿼드</h2>
+        <div class="row-flex mb">
+          <select id="filterPos">
+            <option value="ALL">전체</option>
+            <option value="GK">GK</option>
+            <option value="DF">DF</option>
+            <option value="MF">MF</option>
+            <option value="FW">FW</option>
+          </select>
+          <span class="muted" style="font-size:12px; align-self:center" id="squadCount"></span>
+        </div>
+        <table id="squadTable">
+          <thead>
+            <tr>
+              <th>선수</th><th>포지션</th><th>나이</th><th class="num">OVR</th>
+              <th class="num">주급</th><th>계약</th><th>상태</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>다음 경기</h2>
+        <div id="nextMatch" class="muted" style="font-size:13px"> 로딩 중…</div>
+        <div class="actions mt">
+          <button class="btn" id="btnSimulate">경기 진행하기</button>
+        </div>
+        <div class="panel-inset mt">
+          <h3>팬 만족도</h3>
+          <div class="row-flex">
+            <span class="val" id="fanValue">0</span>
+            <span class="muted">%</span>
+          </div>
+          <div class="meter" id="fanMeter"><div id="fanBar" style="width:0%"></div></div>
+          <div class="muted" style="font-size:11px; margin-top:6px;">
+            경기 결과, 마케팅, 시설 투자에 따라 변합니다.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>경영</h2>
+        <div class="panel-inset">
+          <h3>시설 투자</h3>
+          <div class="range-row">
+            <span class="muted" style="font-size:12px; width:60px;">시설</span>
+            <input type="range" id="facilityRange" min="0" max="10" value="2" />
+            <span class="val muted" style="font-size:12px; width:60px; text-align:right;">Lv <span id="facilityVal">2</span></span>
+          </div>
+          <div class="muted" style="font-size:11px; margin-top:4px;">
+            시설이 높을수록 관중 수입과 홈 경기력이 소폭 상승합니다.
+          </div>
+        </div>
+        <div class="panel-inset">
+          <h3>마케팅 투자</h3>
+          <div class="range-row">
+            <span class="muted" style="font-size:12px; width:60px;">마케팅</span>
+            <input type="range" id="marketingRange" min="0" max="10" value="2" />
+            <span class="val muted" style="font-size:12px; width:60px; text-align:right;">Lv <span id="marketingVal">2</span></span>
+          </div>
+          <div class="muted" style="font-size:11px; margin-top:4px;">
+            마케팅이 높을수록 팬 만족도 상승 폭이 커집니다.
+          </div>
+        </div>
+        <div class="panel-inset">
+          <h3>주급 예산</h3>
+          <div class="row-flex">
+            <span class="muted" style="font-size:12px;">사용 중인 주급</span>
+            <span class="val" id="wageUsed" style="font-size:13px;">0원/주</span>
+            <span class="muted" style="font-size:11px;">/ 한도 <span id="wageLimit">0원/주</span></span>
+          </div>
+          <div class="meter" id="wageMeter"><div id="wageBar" style="width:0%"></div></div>
+        </div>
+        <div class="actions mt">
+          <button class="btn secondary" id="btnApplyInvestment">투자 적용</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>이적 시장</h2>
+        <div class="row-flex mb">
+          <select id="transferType">
+            <option value="buy">영입 (이적 자금 사용)</option>
+            <option value="sell">방출 (선수 판매)</option>
+          </select>
+        </div>
+        <div id="transferPanel">
+          <p class="muted" style="font-size:13px" id="transferHint">아래 버튼을 눌러 새 시즌을 시작하고 이적 시장을 열거나, 방출할 선수를 고르세요.</p>
+        </div>
+        <div class="actions mt" id="transferActions" style="display:none">
+          <button class="btn" id="btnTransfer">적용</button>
+          <button class="btn secondary" id="btnTransferCancel">취소</button>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2>경기/경영 로그</h2>
+        <div class="log" id="logPanel">
+          <div class="entry info">시뮬레이션을 시작하면 구단을 운영하고 경기/이적/경영/사건 로그를 볼 수 있습니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px; text-align:center;">
+      <div class="row-flex" style="justify-content:center; gap:10px;">
+        <button class="btn secondary" id="btnNewSeason">새 시즌 시작하기 (초기화)</button>
+        <button class="btn secondary" id="btnEndSeason">현재 시즌 종료·평가</button>
+      </div>
+    </div>
+
+    <div id="endSeasonPanel" class="hidden" style="margin-top:14px;">
+      <div class="card">
+        <h2>시즌 종료 후 경영 성과 평가</h2>
+        <div id="endSeasonSummary"></div>
+        <div class="actions mt">
+          <button class="btn" id="btnRestart">다시 구단 경영 시작</button>
+          <button class="btn secondary" id="btnContinuePub">계속 이어서 경영</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>프리미어리그 축구 구단 경영 시뮬레이션 · 경영·경제 체험형 MVP</footer>
 
   <script>
     // ---------- 데이터 ----------
@@ -281,7 +430,7 @@
       GK: { short: 'GK' },
       DF: { short: 'DF' },
       MF: { short: 'MF' },
-      FW: { short: 'FW' },
+      FW: { short: 'FW' }
     };
 
     const CLUB_NAMES = [
@@ -322,12 +471,31 @@
       '사우샘프턴': 'SOU'
     };
 
+    const CLUB_SETUP = {
+      '맨체스터 유나이티드': { cash: 420, transferBudget: 190, wageBudget: 150, fan: 65, squadCost: 30, name: '맨체스터 유나이티드' },
+      '아스널': { cash: 400, transferBudget: 185, wageBudget: 150, fan: 64, squadCost: 29, name: '아스널' },
+      '리버풀': { cash: 430, transferBudget: 200, wageBudget: 155, fan: 68, squadCost: 31, name: '리버풀' },
+      '첼시': { cash: 390, transferBudget: 175, wageBudget: 148, fan: 63, squadCost: 28, name: '첼시' },
+      '토트넘 홋스퍼': { cash: 360, transferBudget: 160, wageBudget: 138, fan: 60, squadCost: 27, name: '토트넘 홋스퍼' },
+      '맨체스터 시티': { cash: 440, transferBudget: 210, wageBudget: 160, fan: 70, squadCost: 32, name: '맨체스터 시티' },
+      '뉴캐슬 유나이티드': { cash: 260, transferBudget: 110, wageBudget: 100, fan: 52, squadCost: 20, name: '뉴캐슬 유나이티드' },
+      '애스턴 빌라': { cash: 230, transferBudget: 100, wageBudget: 95, fan: 48, squadCost: 19, name: '애스턴 빌라' },
+      '브라이튼': { cash: 200, transferBudget: 90, wageBudget: 85, fan: 46, squadCost: 18, name: '브라이튼' },
+      '웨스트햄 유나이티드': { cash: 240, transferBudget: 100, wageBudget: 95, fan: 50, squadCost: 19, name: '웨스트햄 유나이티드' },
+      '본머스': { cash: 180, transferBudget: 80, wageBudget: 78, fan: 42, squadCost: 16, name: '본머스' },
+      '풀럼': { cash: 200, transferBudget: 90, wageBudget: 85, fan: 44, squadCost: 17, name: '풀럼' },
+      '울버햄프턴 원더러스': { cash: 190, transferBudget: 85, wageBudget: 80, fan: 43, squadCost: 17, name: '울버햄프턴 원더러스' },
+      '노팅엄 포레스트': { cash: 170, transferBudget: 75, wageBudget: 72, fan: 40, squadCost: 15, name: '노팅엄 포레스트' },
+      '크리스털 팰리스': { cash: 180, transferBudget: 80, wageBudget: 75, fan: 41, squadCost: 16, name: '크리스털 팰리스' },
+      '사우샘프턴': { cash: 160, transferBudget: 70, wageBudget: 70, fan: 38, squadCost: 14, name: '사우샘프턴' }
+    };
+
     const FIRST_NAMES = [
       'Alexander', 'Marcus', 'Daniel', 'James', 'Oliver', 'Harry', 'Jack', 'Henry',
       'George', 'Fred', 'Morgan', 'Kyle', 'Jordan', 'Nathan', 'Theo', 'Rico',
       'Andy', 'Chris', 'Lee', 'David', 'Steven', 'Anthony', 'Michel', 'Ravi',
       'Ethan', 'Noah', 'Lucas', 'Ben', 'Tyler', 'Jay', 'Owen', 'Callum',
-      'Seth', 'Aidan', 'Quinn', 'Rhys', 'Cian', 'Ewan', 'Finn', 'Luca'
+      'Seth', 'Aidan', 'Quinn', 'Luca', 'Finn', 'Rhys', 'Cian', 'Ewan'
     ];
 
     const LAST_NAMES = [
@@ -364,9 +532,8 @@
         age,
         overall: base,
         form: rnd(62, 98),
-        condition: '좋아',
         contractYears: rnd(1, 4),
-        wage: rnd(8, 40) * 0.5,
+        wage: rnd(7, 38) * 0.5,
         starter: age <= 30 && base >= 72
       };
     }
@@ -378,77 +545,6 @@
         pool.push({ ...p, marketPrice: rnd(120, 900) });
       }
       return pool;
-    }
-
-    function makeClub() {
-      const name = pick(CLUB_NAMES);
-      return {
-        id: 1,
-        name,
-        short: CLUB_SHORT[name] || name.replace(/\s+/g, '').slice(0, 4).toUpperCase(),
-        leagueId: 1,
-        budget: 380,
-        transferBudget: 180,
-        wageBudget: 142,
-        cash: 220,
-        points: 0,
-        played: 0,
-        won: 0,
-        drawn: 0,
-        lost: 0,
-        gf: 0,
-        ga: 0,
-        standing: 16
-      };
-    }
-
-    function makeLeague(club) {
-      const clubs = [club];
-      const usedNames = new Set([club.name]);
-      while (clubs.length < 16) {
-        let name = pick(CLUB_NAMES);
-        let tries = 0;
-        while (usedNames.has(name) && tries < 20) {
-          name = pick(CLUB_NAMES);
-          tries++;
-        }
-        usedNames.add(name);
-        const c = {
-          id: clubs.length + 1,
-          name,
-          short: CLUB_SHORT[name] || name.replace(/\s+/g, '').slice(0, 4).toUpperCase(),
-          leagueId: 1,
-          points: rnd(8, 48),
-          played: rnd(2, 10),
-          won: rnd(0, 6),
-          drawn: rnd(0, 4),
-          lost: rnd(0, 6),
-          gf: rnd(5, 30),
-          ga: rnd(5, 30)
-        };
-        c.standing = null;
-        clubs.push(c);
-      }
-      clubs.sort((a, b) => b.points - a.points || (b.gf - b.ga) - (a.gf - a.ga));
-      clubs.forEach((c, i) => c.standing = i + 1);
-      return clubs;
-    }
-
-    function makeSquad(clubSize) {
-      const squad = [];
-      let id = 0;
-      const counts = { GK: 2, DF: 7, MF: 6, FW: 7 };
-      let total = counts.GK + counts.DF + counts.MF + counts.FW;
-      if (total !== clubSize) counts.MF += (clubSize - total);
-      for (const pos of Object.keys(counts)) {
-        for (let i = 0; i < counts[pos]; i++) {
-          const p = makePlayer(id++);
-          p.pos = pos;
-          p.posLabel = POSITIONS[pos].short;
-          squad.push(p);
-        }
-      }
-      return squad;
     }
 
     // ---------- 상태 ----------
@@ -463,29 +559,97 @@
       nextHome: true,
       results: [],
       events: [],
-      pendingTransfer: null
+      facilityLevel: 2,
+      marketingLevel: 2,
+      previousFacilityLevel: 2,
+      previousMarketingLevel: 2,
+      pendingTransfer: null,
+      endSeasonShown: false
     };
 
-    function init() {
-      state.club = makeClub();
+    // ---------- 초기 화면 ----------
+    function fillStartClubs() {
+      const sel = document.getElementById('startClub');
+      sel.innerHTML = '';
+      CLUB_NAMES.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name + ' — 팬 만족도 ' + CLUB_SETUP[name].fan + '%, 초기 예산 ' + fmtMoney(CLUB_SETUP[name].cash);
+        sel.appendChild(opt);
+      });
+    }
+
+    document.getElementById('btnStart').addEventListener('click', () => {
+      const name = document.getElementById('startClub').value;
+      startGame(name);
+    });
+
+    function startGame(name) {
+      const setup = CLUB_SETUP[name];
+      state.club = {
+        id: 1,
+        name: setup.name,
+        short: CLUB_SHORT[name] || name.replace(/\s+/g, '').slice(0, 4).toUpperCase(),
+        leagueId: 1,
+        cash: setup.cash,
+        transferBudget: setup.transferBudget,
+        wageBudget: setup.wageBudget,
+        fan: setup.fan,
+        points: 0,
+        played: 0,
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        gf: 0,
+        ga: 0,
+        standing: 16,
+        facilityLevel: 2,
+        marketingLevel: 2
+      };
       state.league = makeLeague(state.club);
-      state.squad = makeSquad(22);
+      state.squad = makeSquad(22, setup.squadCost);
       state.market = makeMarketPool(24);
       state.week = 1;
       state.season = 1;
       state.results = [];
       state.events = [];
+      state.facilityLevel = 2;
+      state.marketingLevel = 2;
+      state.previousFacilityLevel = 2;
+      state.previousMarketingLevel = 2;
+      state.pendingTransfer = null;
+      state.endSeasonShown = false;
       scheduleNextMatch();
       renderAll();
-      log('새 시즌을 시작합니다. 구단 "' + state.club.name + '"의 첫 프리미어리그 시즌입니다.');
+      log('새 시즌을 시작합니다. 구단 "' + name + '"의 첫 프리미어리그 시즌입니다.');
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+      document.getElementById('endSeasonPanel').classList.add('hidden');
     }
 
-    function scheduleNextMatch() {
-      const opponents = state.league.filter(c => c.id !== state.club.id);
-      state.nextOpponent = pick(opponents);
-      state.nextHome = Math.random() < 0.5;
-    }
+    document.getElementById('btnNewSeason').addEventListener('click', () => {
+      if (confirm('새 시즌을 시작하면 구단 상황이 초기화됩니다. 계속할까요?')) {
+        document.getElementById('startScreen').classList.remove('hidden');
+        document.getElementById('gameScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.add('hidden');
+      }
+    });
 
+    document.getElementById('btnEndSeason').addEventListener('click', () => {
+      showEndSeason();
+    });
+
+    document.getElementById('btnRestart').addEventListener('click', () => {
+      document.getElementById('startScreen').classList.remove('hidden');
+      document.getElementById('gameScreen').classList.add('hidden');
+      document.getElementById('endSeasonPanel').classList.add('hidden');
+    });
+
+    document.getElementById('btnContinuePub').addEventListener('click', () => {
+      document.getElementById('endSeasonPanel').classList.add('hidden');
+    });
+
+    // ---------- 공식 ----------
     function fmtMoney(v) {
       if (v >= 1000) {
         return (v / 1000).toFixed(1) + '억';
@@ -497,7 +661,66 @@
       return (v * 10000).toLocaleString() + '원/주';
     }
 
-    // ---------- 경기 시뮬레이션 ----------
+    function fmtMoneyNoSpace(v) {
+      if (v >= 1000) {
+        return (v / 1000).toFixed(1) + '억';
+      }
+      return v.toFixed(0) + '만';
+    }
+
+    function makeLeague(club) {
+      const clubs = [club];
+      const usedNames = new Set([club.name]);
+      while (clubs.length < 16) {
+        let name = pick(CLUB_NAMES);
+        let tries = 0;
+        while (usedNames.has(name) && tries < 20) {
+          name = pick(CLUB_NAMES);
+          tries++;
+        }
+        usedNames.add(name);
+        const setup = CLUB_SETUP[name] || { fan: 50, cash: 220, transferBudget: 120 };
+        const c = {
+          id: clubs.length + 1,
+          name,
+          short: CLUB_SHORT[name] || name.replace(/\s+/g, '').slice(0, 4).toUpperCase(),
+          leagueId: 1,
+          points: rnd(8, 48),
+          played: rnd(2, 10),
+          won: rnd(0, 6),
+          drawn: rnd(0, 4),
+          lost: rnd(0, 6),
+          gf: rnd(5, 30),
+          ga: rnd(5, 30),
+          fan: setup.fan + rnd(-4, 4)
+        };
+        c.standing = null;
+        clubs.push(c);
+      }
+      clubs.sort((a, b) => b.points - a.points || (b.gf - b.ga) - (a.gf - a.ga));
+      clubs.forEach((c, i) => c.standing = i + 1);
+      return clubs;
+    }
+
+    function makeSquad(clubSize, cost) {
+      const squad = [];
+      let id = 0;
+      const counts = { GK: 2, DF: 7, MF: 6, FW: 7 };
+      let total = counts.GK + counts.DF + counts.MF + counts.FW;
+      if (total !== clubSize) counts.MF += (clubSize - total);
+      for (const pos of Object.keys(counts)) {
+        for (let i = 0; i < counts[pos]; i++) {
+          const p = makePlayer(id++);
+          p.pos = pos;
+          p.posLabel = POSITIONS[pos].short;
+          p.wage = Math.round((rnd(8, 40) * 0.5) * 10) / 10;
+          squad.push(p);
+        }
+      }
+      return squad;
+    }
+
+    // ---------- 경기 ----------
     function simulateMatch() {
       const club = state.club;
       const opponent = state.nextOpponent;
@@ -509,7 +732,8 @@
       const aRaw = teamA.raw;
       const bRaw = teamB.raw;
 
-      const lambdaA = Math.max(0.15, (aRaw / (aRaw + bRaw)) * 2.2 + (homeAdv ? 0.35 : -0.05) + rnd(-1, 1) * 0.25);
+      const homeField = state.nextHome ? 1.12 + state.facilityLevel * 0.012 : 1.0;
+      const lambdaA = Math.max(0.15, (aRaw / (aRaw + bRaw)) * 2.2 * homeField + (homeAdv ? 0.35 : -0.05) + rnd(-1, 1) * 0.25);
       const lambdaB = Math.max(0.15, (bRaw / (aRaw + bRaw)) * 2.0 + (!state.nextHome ? 0.35 : -0.05) + rnd(-1, 1) * 0.25);
 
       const goalsA = poisson(lambdaA);
@@ -634,6 +858,20 @@
           p.condition = '좋아';
         }
       });
+
+      // 팬 만족도 변동
+      let fanDelta = 0;
+      if (res.winA) {
+        fanDelta += 3 + rnd(0, 2);
+      } else if (res.draw) {
+        fanDelta += 1;
+      } else {
+        fanDelta -= 2 - rnd(0, 2);
+      }
+      if (state.nextHome && res.winA) {
+        fanDelta += 1;
+      }
+      state.club.fan = Math.max(0, Math.min(100, state.club.fan + fanDelta));
     }
 
     // ---------- 렌더링 ----------
@@ -643,6 +881,7 @@
       renderSquad();
       renderNextMatch();
       renderTransfer();
+      renderInvestment();
     }
 
     function renderTopBar() {
@@ -692,15 +931,15 @@
       tbody.innerHTML = '';
       rows.forEach(p => {
         const tr = document.createElement('tr');
-        const condClass = p.condition === '좋아' ? 'text-right' : 'bad';
+        const condClass = p.condition === '좋아' ? 'good' : (p.condition === '보통' ? 'warn' : 'bad');
         tr.innerHTML =
           '<td><b>' + p.name + '</b></td>' +
           '<td><span class="badge ' + (p.starter ? 'starter' : 'sub') + '">' + p.posLabel + '</span></td>' +
           '<td class="num">' + p.age + '</td>' +
           '<td class="num"><b>' + p.overall + '</b></td>' +
-          '<td class="num">' + (p.wage * 10000).toLocaleString() + '원</td>' +
-          '<td class="' + condClass + '">' + p.condition + '</td>' +
-          '<td class="num">' + p.contractYears + '년</td>';
+          '<td class="num">' + fmtWage(p.wage) + '</td>' +
+          '<td class="num">' + p.contractYears + '년</td>' +
+          '<td><span class="badge ' + condClass + '">' + p.condition + '</span></td>';
         tbody.appendChild(tr);
       });
       document.getElementById('squadCount').textContent = rows.length + '명';
@@ -723,6 +962,10 @@
         '</div>' +
         '<div class="muted" style="font-size:12px; margin-top:4px">' +
         '다음 경기까지: <b>1주</b>' +
+        '</div>' +
+        '<div class="muted" style="font-size:11px; margin-top:4px;">' +
+        '홈 경기력: ' + (1.12 + state.facilityLevel * 0.012).toFixed(3) +
+        ' (시설에 따라 상승)' +
         '</div>';
     }
 
@@ -772,7 +1015,7 @@
             (state.pendingTransfer && state.pendingTransfer.type === 'sell' && state.pendingTransfer.playerId === p.id ? 'checked' : '') +
             '>' +
             '<div><b>' + p.name + '</b> <span class="badge ' + (p.pos === 'GK' ? 'starter' : 'sub') + '">' + p.posLabel + '</span></div>' +
-            '<span class="muted" style="font-size:12px; margin-left:auto">주급 ' + (p.wage * 10000).toLocaleString() + '원 · 예상판매가 ' + fmtMoney(estSell) + '</span>' +
+            '<span class="muted" style="font-size:12px; margin-left:auto">주급 ' + fmtWage(p.wage) + ' · 예상판매가 ' + fmtMoney(estSell) + '</span>' +
             '</div>'
           );
         }).join('');
@@ -784,23 +1027,76 @@
       }
     }
 
-    function log(msg) {
-      const panel = document.getElementById('logPanel');
-      const entry = document.createElement('div');
-      entry.className = 'entry';
-      entry.innerHTML = msg;
-      panel.appendChild(entry);
-      panel.scrollTop = panel.scrollHeight;
+    function renderInvestment() {
+      document.getElementById('facilityVal').textContent = state.facilityLevel;
+      document.getElementById('marketingVal').textContent = state.marketingLevel;
+      document.getElementById('marketingRange').value = state.marketingLevel;
+      document.getElementById('facilityRange').value = state.facilityLevel;
+
+      const wageUsed = state.squad.reduce((a, p) => a + p.wage * 10000, 0);
+      const wageLimit = state.club.wageBudget * 10000;
+      document.getElementById('wageUsed').textContent = wageUsed.toLocaleString() + '원/주';
+      document.getElementById('wageLimit').textContent = (state.club.wageBudget * 10000).toLocaleString() + '원/주';
+
+      const wagePct = Math.min(100, (wageUsed / wageLimit) * 100);
+      const wageBar = document.getElementById('wageBar');
+      wageBar.style.width = wagePct + '%';
+      const wageMeter = document.getElementById('wageMeter');
+      wageMeter.classList.remove('warn', 'bad');
+      if (wagePct > 90) wageMeter.classList.add('bad');
+      else if (wagePct > 75) wageMeter.classList.add('warn');
     }
 
-    function addLog(html) {
-      const panel = document.getElementById('logPanel');
-      const entry = document.createElement('div');
-      entry.className = 'entry';
-      entry.innerHTML = html;
-      panel.appendChild(entry);
-      panel.scrollTop = panel.scrollHeight;
-    }
+    // ---------- 투자 ----------
+    document.getElementById('btnApplyInvestment').addEventListener('click', () => {
+      const fac = parseInt(document.getElementById('facilityRange').value, 10);
+      const mkt = parseInt(document.getElementById('marketingRange').value, 10);
+
+      if (isNaN(fac) || isNaN(mkt)) {
+        addLog('<span class="entry bad">투자 입력 값이 올바르지 않습니다.</span>');
+        return;
+      }
+      if (fac < 0 || fac > 10 || mkt < 0 || mkt > 10) {
+        addLog('<span class="entry bad">투자는 0~10 범위에서만 가능합니다.</span>');
+        return;
+      }
+
+      const facCost = Math.abs(fac - state.previousFacilityLevel) * 8;
+      const mktCost = Math.abs(mkt - state.previousMarketingLevel) * 6;
+
+      if (fac > state.previousFacilityLevel) {
+        if (state.club.cash < facCost) {
+          addLog('<span class="entry bad">시설 투자 비용이 부족합니다. (필요: ' + fmtMoney(facCost) + ')</span>');
+          return;
+        }
+        state.club.cash -= facCost;
+        addLog('<span class="entry good">시설 투자를 ' + fac + '레벨로 올렸습니다. (비용 ' + fmtMoney(facCost) + ')</span>');
+      } else if (fac < state.previousFacilityLevel) {
+        addLog('<span class="entry">시설 투자를 ' + fac + '레벨로 내렸습니다.</span>');
+      }
+
+      if (mkt > state.previousMarketingLevel) {
+        if (state.club.cash < mktCost) {
+          addLog('<span class="entry bad">마케팅 투자 비용이 부족합니다. (필요: ' + fmtMoney(mktCost) + ')</span>');
+          return;
+        }
+        state.club.cash -= mktCost;
+        addLog('<span class="entry good">마케팅 투자를 ' + mkt + '레벨로 올렸습니다. (비용 ' + fmtMoney(mktCost) + ')</span>');
+      } else if (mkt < state.previousMarketingLevel) {
+        addLog('<span class="entry">마케팅 투자를 ' + mkt + '레벨로 내렸습니다.</span>');
+      }
+
+      state.facilityLevel = fac;
+      state.marketingLevel = mkt;
+
+      if (fac > state.club.facilityLevel) state.club.facilityLevel = fac;
+      if (mkt > state.club.marketingLevel) state.club.marketingLevel = mkt;
+
+      state.previousFacilityLevel = fac;
+      state.previousMarketingLevel = mkt;
+
+      renderAll();
+    });
 
     // ---------- 이벤트 ----------
     document.getElementById('btnSimulate').addEventListener('click', () => {
@@ -809,12 +1105,6 @@
         return;
       }
       simulateMatch();
-    });
-
-    document.getElementById('btnNewSeason').addEventListener('click', () => {
-      if (confirm('새 시즌을 시작하면 구단 상황이 초기화됩니다. 계속할까요?')) {
-        init();
-      }
     });
 
     document.getElementById('filterPos').addEventListener('change', renderSquad);
@@ -881,8 +1171,114 @@
       renderAll();
     });
 
+    // ---------- 시즌 종료 평가 ----------
+    function showEndSeason() {
+      const c = state.club;
+      const marketVal = c.transferBudget;
+      const wageOk = c.wageBudget >= 100;
+      const finalFan = c.fan;
+      const perfScore = Math.round(
+        (c.points / 3) * 1.5 +
+        Math.max(0, c.standing <= 6 ? 20 : c.standing <= 10 ? 10 : 0) +
+        (finalFan >= 65 ? 15 : finalFan >= 50 ? 8 : 0) +
+        (marketVal >= 150 ? 8 : marketVal >= 100 ? 4 : 0) +
+        (c.facilityLevel >= 5 ? 6 : c.facilityLevel >= 3 ? 3 : 0) +
+        (c.marketingLevel >= 5 ? 6 : c.marketingLevel >= 3 ? 3 : 0)
+      );
+      const grade =
+        perfScore >= 80 ? 'S' :
+        perfScore >= 65 ? 'A' :
+        perfScore >= 50 ? 'B' :
+        perfScore >= 35 ? 'C' : 'D';
+
+      let rankMsg = '';
+      if (c.standing <= 4) rankMsg = '상위권 구단으로 자리 잡았습니다.';
+      else if (c.standing <= 8) rankMsg = '중위권 수준의 성적입니다.';
+      else if (c.standing <= 12) rankMsg = '하위권과의 경쟁이 치열합니다.';
+      else rankMsg = '강등권 근처의 위험한 위치입니다.';
+
+      let fanMsg = '';
+      if (finalFan >= 75) fanMsg = '팬들이 매우 만족하고 있습니다.';
+      else if (finalFan >= 55) fanMsg = '팬들의 반응이 나쁘지 않습니다.';
+      else if (finalFan >= 40) fanMsg = '팬 만족도가 다소 낮은 편입니다.';
+      else fanMsg = '팬들의 불만이 커지고 있습니다.';
+
+      const summary = document.getElementById('endSeasonSummary');
+      summary.innerHTML = `
+        <div class="summary-grid">
+          <div class="summary-box">
+            <div class="label">최종 리그 순위</div>
+            <div class="val">${c.standing}위</div>
+            <div class="desc">${rankMsg}</div>
+          </div>
+          <div class="summary-box">
+            <div class="label">시즌 성적</div>
+            <div class="val">${c.points}점</div>
+            <div class="desc">경기 ${c.played} · 승 ${c.won} · 무 ${c.drawn} · 패 ${c.lost}</div>
+          </div>
+          <div class="summary-box">
+            <div class="label">득점·실점</div>
+            <div class="val">${c.gf} / ${c.ga}</div>
+            <div class="desc">골득실 ${c.gf - c.ga}</div>
+          </div>
+          <div class="summary-box">
+            <div class="label">팬 만족도</div>
+            <div class="val">${finalFan}%</div>
+            <div class="desc">${fanMsg}</div>
+          </div>
+          <div class="summary-box">
+            <div class="label">재무 상태</div>
+            <div class="val">${fmtMoney(c.cash)}</div>
+            <div class="desc">이적자금 ${fmtMoney(marketVal)} · 주급한도 ${fmtWage(c.wageBudget)}</div>
+          </div>
+          <div class="summary-box">
+            <div class="label">시설·마케팅</div>
+            <div class="val">Lv ${c.facilityLevel} / Lv ${c.marketingLevel}</div>
+            <div class="desc">관중 수입·팬 반응 기반</div>
+          </div>
+          <div class="summary-box" style="grid-column: 1 / -1;">
+            <div class="label">경영 성과 평가</div>
+            <div class="val" style="color:${grade === 'S' ? '#2b8c4e' : grade === 'A' ? '#2b8c4e' : grade === 'B' ? '#d29922' : '#c8334a'}">${grade}등급 · 종합 점수 ${perfScore}</div>
+            <div class="desc">승점·순위·팬 만족도·이적자금·시설·마케팅을 종합해 산정</div>
+          </div>
+        </div>
+        <div class="muted" style="font-size:12px; margin-top:12px;">
+          ${grade === 'S' ? '뛰어난 경영입니다. 다음 시즌에도 강한 전력과 팬 지지를 유지할 가능성이 높습니다.' :
+            grade === 'A' ? '양호한 경영입니다. 이적자금이나 마케팅 중 한두 가지를 더 보강하면 상위권 도전이 가능합니다.' :
+            grade === 'B' ? '보통 수준의 경영입니다. 스쿼드 보강과 팬 만족도 관리가 더 필요합니다.' :
+            '재정비하여 다시 도전해야 하는 시즌입니다. 영입·마케팅·시설 투자 전략을 바꿔보세요.'}
+        </div>
+      `;
+      document.getElementById('endSeasonPanel').classList.remove('hidden');
+    }
+
+    // ---------- 로그 ----------
+    function log(msg) {
+      const panel = document.getElementById('logPanel');
+      const entry = document.createElement('div');
+      entry.className = 'entry';
+      entry.innerHTML = msg;
+      panel.appendChild(entry);
+      panel.scrollTop = panel.scrollHeight;
+    }
+
+    function addLog(html) {
+      const panel = document.getElementById('logPanel');
+      const entry = document.createElement('div');
+      entry.className = 'entry';
+      entry.innerHTML = html;
+      panel.appendChild(entry);
+      panel.scrollTop = panel.scrollHeight;
+    }
+
+    function scheduleNextMatch() {
+      const opponents = state.league.filter(c => c.id !== state.club.id);
+      state.nextOpponent = pick(opponents);
+      state.nextHome = Math.random() < 0.5;
+    }
+
     // ---------- 시작 ----------
-    init();
+    fillStartClubs();
   </script>
 </body>
 </html>
